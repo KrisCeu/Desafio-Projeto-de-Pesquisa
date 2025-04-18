@@ -26,7 +26,7 @@ resource "keycloak_user" "joao" {
 //mesmo processo do user anterior
 resource "keycloak_user" "joaquina" {
   realm_id = keycloak_realm.autentica_realm.id
-  username = "Joaquina"
+  username = "joaquina"
   enabled  = true
 
   //há diferença aqui, com nivel de acesso baixo só será necessário a senha, sem uso de qrcode
