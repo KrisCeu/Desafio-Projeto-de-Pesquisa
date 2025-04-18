@@ -2,10 +2,10 @@ terraform {
   //definindo o provider(provedor) para permitir que o terraform se comunique com o keycloak
   required_providers {
     keycloak = {
-      //nome do provider do keycloak, irá procurar o keycloak com este autor nos registros do terraform
+      //nome do provider do keycloak, irá procurar o keycloak oficial
       source  = "keycloak/keycloak"
       //versão do provider do keycloak
-      version = "4.1.0"
+      version = ">= 4.0.0"
     }
   }
 }
