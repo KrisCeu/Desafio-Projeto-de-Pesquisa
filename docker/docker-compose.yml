@@ -1,10 +1,9 @@
-#criando o docker
-version: '3.8'
-
+#criando o docker, versão não especificada pois o composer já puxa a melhor versão para o que necessita
 
 services:
     #gerando a imagem do keycloak para utilizar dentro do docker 
     keycloak:
+      #definindo as configurações do keycloak
       image: quay.io/keycloak/keycloak:24.0.3
       container_name: keycloak
       command: start-dev
