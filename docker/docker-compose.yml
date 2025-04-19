@@ -4,7 +4,7 @@ services:
     #gerando a imagem do keycloak para utilizar dentro do docker 
     keycloak:
       #definindo as configurações do keycloak
-      image: quay.io/keycloak/keycloak:24.0.3
+      image: quay.io/keycloak/keycloak:26.0.8
       container_name: keycloak
       command: start-dev
       environment:
