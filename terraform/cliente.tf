@@ -36,3 +36,4 @@ resource "keycloak_openid_client_service_account_role" "registrador_manage_clien
   client_id               = data.keycloak_openid_client.realm_management.id                           # Client interno do Keycloak
   role                    = "manage-clients"                                                          # Permissão para gerenciar clients
 }
+
