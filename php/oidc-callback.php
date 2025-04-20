@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 if (!isset($_GET['code'])) {
     die("Código de autorização não encontrado.");
 }
@@ -36,7 +40,37 @@ curl_close($ch);
 // Converter resposta JSON
 $token_response = json_decode($response, true);
 
+// Exibir a resposta para debug
 echo "<h2>Resposta do servidor:</h2><pre>";
 print_r($token_response);
 echo "</pre>";
+
+// Verificar se o access_token foi recebido
+if (!isset($token_response['access_token'])) {
+    die("Access token não encontrado.");
+}
+
+$access_token = $token_response['access_token'];
+
+// Decodificar o payload do JWT (segunda parte do token)
+$parts = explode('.', $access_token);
+if (count($parts) !== 3) {
+    die("Token JWT inválido.");
+}
+
+$payload = json_decode(base64_decode(strtr($parts[1], '-_', '+/')), true); // Ajusta base64 para o padrão correto
+
+echo "<h2>Payload do token:</h2><pre>";
+print_r($payload);
+echo "</pre>";
+
+// Verificar o atributo personalizado 'nivel_acesso'
+if (isset($payload['nivel_acesso']) && $payload['nivel_acesso'] === 'alto') {
+    echo "<h3>Acesso concedido: nível de acesso ALTO</h3>";
+    echo "<p>Bem-vindo(a), " . htmlspecialchars($payload['preferred_username']) . "</p>";
+} else {
+    http_response_code(403); // Código de acesso proibido
+    echo "<h3>Acesso negado: nível de acesso insuficiente</h3>";
+    exit;
+}
 ?>
