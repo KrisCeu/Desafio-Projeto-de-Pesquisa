@@ -1,12 +1,12 @@
-# Criação do fluxo principal
+# 1. Fluxo principal
 resource "keycloak_authentication_flow" "custom_browser" {
   realm_id    = keycloak_realm.autentica_realm.id
   alias       = "custom-browser"
-  description = "Fluxo de autenticação personalizado com TOTP opcional"
+  description = "Fluxo com TOTP opcional"
   provider_id = "basic-flow"
 }
 
-# Subflow de formulários (como no padrão)
+# 2. Subflow de formulários (senha)
 resource "keycloak_authentication_subflow" "forms" {
   realm_id          = keycloak_realm.autentica_realm.id
   parent_flow_alias = keycloak_authentication_flow.custom_browser.alias
@@ -15,7 +15,7 @@ resource "keycloak_authentication_subflow" "forms" {
   requirement       = "REQUIRED"
 }
 
-# Execução do formulário username/password dentro do subflow
+# 3. Execução username/password
 resource "keycloak_authentication_execution" "username_password" {
   realm_id          = keycloak_realm.autentica_realm.id
   parent_flow_alias = keycloak_authentication_subflow.forms.alias
@@ -23,46 +23,33 @@ resource "keycloak_authentication_execution" "username_password" {
   requirement       = "REQUIRED"
 }
 
-# Execução do TOTP dentro do subflow
-resource "keycloak_authentication_execution" "totp" {
+# 4. Subflow condicional TOTP
+resource "keycloak_authentication_subflow" "subflow_totp" {
   realm_id          = keycloak_realm.autentica_realm.id
-  parent_flow_alias = keycloak_authentication_subflow.forms.alias
-  authenticator     = "auth-otp-form"
-  requirement       = "ALTERNATIVE"
+  parent_flow_alias = keycloak_authentication_flow.custom_browser.alias
+  alias             = "subflow-totp-check"
+  provider_id       = "basic-flow"
+  requirement       = "REQUIRED" # <- Required para que o condicional seja sempre avaliado
 }
 
-# Bind do fluxo ao navegador
+# 5. Verifica se o usuário configurou TOTP
+resource "keycloak_authentication_execution" "totp_condition" {
+  realm_id          = keycloak_realm.autentica_realm.id
+  parent_flow_alias = keycloak_authentication_subflow.subflow_totp.alias
+  authenticator     = "conditional-user-configured"
+  requirement       = "REQUIRED"
+}
+
+# 6. Executa TOTP se a condição anterior for verdadeira
+resource "keycloak_authentication_execution" "totp" {
+  realm_id          = keycloak_realm.autentica_realm.id
+  parent_flow_alias = keycloak_authentication_subflow.subflow_totp.alias
+  authenticator     = "auth-otp-form"
+  requirement       = "REQUIRED"
+}
+
+# 7. Bind ao fluxo do navegador
 resource "keycloak_authentication_bindings" "bind_browser" {
   realm_id     = keycloak_realm.autentica_realm.id
   browser_flow = keycloak_authentication_flow.custom_browser.alias
-}
-
-# Nível de garantia para username/password
-resource "keycloak_authentication_execution_config" "username_password_config" {
-  realm_id     = keycloak_realm.autentica_realm.id
-  alias        = "username-password-context"
-  execution_id = keycloak_authentication_execution.username_password.id
-
-  config = {
-    authnContextClassRef = "1"
-  }
-
-   depends_on = [
-    keycloak_authentication_execution.username_password
-  ]
-}
-
-# Nível de garantia para TOTP
-resource "keycloak_authentication_execution_config" "totp_config" {
-  realm_id     = keycloak_realm.autentica_realm.id
-  alias        = "totp-context"
-  execution_id = keycloak_authentication_execution.totp.id
-
-  config = {
-    authnContextClassRef = "5"
-  }
-
-  depends_on = [
-  keycloak_authentication_execution.totp
-]
 }

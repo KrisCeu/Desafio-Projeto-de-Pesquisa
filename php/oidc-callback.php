@@ -65,7 +65,8 @@ print_r($payload);
 echo "</pre>";
 
 // Verificar o atributo personalizado 'nivel_acesso'
-if (isset($payload['nivel_acesso']) && $payload['nivel_acesso'] === 'alto') {
+// Verificar se o nível de autenticação (acr) é alto (5)
+if (isset($payload['acr']) && $payload['acr'] === '5') {
     echo "<h3>Acesso concedido: nível de acesso ALTO</h3>";
     echo "<p>Bem-vindo(a), " . htmlspecialchars($payload['preferred_username']) . "</p>";
 } else {
