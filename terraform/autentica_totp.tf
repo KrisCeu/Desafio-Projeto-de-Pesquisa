@@ -1,7 +1,7 @@
 # 1. Fluxo principal
 resource "keycloak_authentication_flow" "custom_browser" {
   realm_id    = keycloak_realm.autentica_realm.id
-  alias       = "custom-browser"
+  alias       = "OTP-browser"
   description = "Fluxo com TOTP opcional"
   provider_id = "basic-flow"
 }
