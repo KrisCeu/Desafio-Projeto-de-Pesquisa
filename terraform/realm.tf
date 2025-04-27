@@ -17,7 +17,15 @@ resource "keycloak_realm" "autentica_realm" {
   verify_email = false
   //Permitir editar o nome de usuário
   edit_username_allowed = true 
-  login_theme = "keycloak" 
+  login_theme = "keycloak"
+
+   browser_flow = "custom_browser_flow"  # Nome direto do fluxo
+
+  lifecycle {
+    ignore_changes = [
+      browser_flow  # Permite ajustes manuais sem conflitos
+    ]
+  }
 }
 
 

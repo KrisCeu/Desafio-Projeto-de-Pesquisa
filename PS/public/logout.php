@@ -1,15 +1,16 @@
 <?php
 require_once __DIR__ . '/../auth/auth-config.php';
 
-// 1. Encerra a sessão local
 session_start();
+$reason = $_SESSION['logout_reason'] ?? null;
 session_destroy();
 
-// 2. Prepara URL de logout sem id_token_hint
+// Logout no Keycloak
 $logoutUrl = KEYCLOAK_URL . "/realms/" . REALM . "/protocol/openid-connect/logout";
-$redirectUrl = 'http://localhost:8000/logout-success.php'; // Página de confirmação
+$redirectUrl = $reason 
+    ? 'http://localhost:8000/logout.php?reason=' . urlencode($reason) 
+    : 'http://localhost:8000/logout-success.php';
 
-// 3. Redirecionamento seguro (alternativo sem token)
 header("Location: {$logoutUrl}?redirect_uri=" . urlencode($redirectUrl));
 exit;
 ?>

@@ -4,6 +4,14 @@ require_once __DIR__ . '/../auth/auth-config.php';
 if (!isset($_GET['code'])) {
     die("Código de autorização não encontrado.");
 }
+// verifica totp:
+$userHasTOTP = isset($payload['acr']) && $payload['acr'] === '2'; // Nível 2 = TOTP configurado
+
+if ($user['nivel_acesso'] === 'alto' && !$userHasTOTP) {
+    $_SESSION['pending_totp_setup'] = true;
+    header("Location: /totp-prompt.php"); // Página de escolha
+    exit;
+}
 
 // Troca o código por token
 $token_url = KEYCLOAK_URL . "/realms/" . REALM . "/protocol/openid-connect/token";
