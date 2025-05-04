@@ -8,7 +8,7 @@ if (!file_exists($config_file)) {
     die("Erro: auth-config.php não encontrado em $config_file");
 }
 
-require_once $config_file;
+require_once $config_file;  // Use require_once para evitar inclusões múltiplas
 
 // Verifica se as constantes estão definidas
 if (!defined('KEYCLOAK_URL') || !defined('REALM') || !defined('CLIENT_ID') || !defined('REDIRECT_URI')) {
@@ -25,6 +25,6 @@ $params = [
 ];
 
 // Redireciona
-header("Location: $auth_url?" . http_build_query($params));
+header("Location: $auth_url?" . http_build_query($params));  // **Use a URL completa com parâmetros**
 exit;
 ?>

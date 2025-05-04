@@ -12,7 +12,7 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_DB: dev-mem
     volumes:
-      - ./docker/keycloak_data:/opt/keycloak/data
+      - ../docker/keycloak_data:/opt/keycloak/data
     networks:
       - default
 
@@ -33,6 +33,6 @@ services:
     ports:
       - "8000:8000"  # Mapeia a porta do servidor PHP
     volumes:
-      - ./PS:/var/www/html
+      - ../PS:/var/www/html
     working_dir: /var/www/html
     command: ["php", "-S", "0.0.0.0:8000", "-t", "public"]  # Inicia o servidor embutido

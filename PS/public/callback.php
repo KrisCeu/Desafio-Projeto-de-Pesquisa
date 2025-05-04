@@ -9,25 +9,14 @@ if (!$code) {
 }
 
 // 2. Trocar o código por um token
-$token_url = KEYCLOAK_URL . "/realms/" . REALM . "/protocol/openid-connect/token";
+$token_url = str_replace("localhost", "keycloak", KEYCLOAK_URL) . "/realms/" . REALM . "/protocol/openid-connect/token";
 
 $data = [
     'grant_type' => 'authorization_code',
     'client_id' => CLIENT_ID,
-    'client_secret' => CLIENT_SECRET,
     'redirect_uri' => REDIRECT_URI,
     'code' => $code
 ];
-
-
-
-$data = [
-    'grant_type' => 'authorization_code',
-    'client_id' => CLIENT_ID,
-    'redirect_uri' => REDIRECT_URI,  // Removido client_secret
-    'code' => $code
-];
-
 
 $options = [
     'http' => [
@@ -53,10 +42,10 @@ if (!$access_token) {
 }
 
 // 4. Obter informações do usuário
-$userinfo_url = KEYCLOAK_URL . "/realms/" . REALM . "/protocol/openid-connect/userinfo";
+$userinfo_url = str_replace("localhost", "keycloak", KEYCLOAK_URL) . "/realms/" . REALM . "/protocol/openid-connect/userinfo";
 $options = [
     'http' => [
-        'header' => "Authorization: Bearer $access_token\r\n",
+        'header' => "Authorization: Bearer " . $access_token . "\r\n",  // Corrigido e simplificado
         'method' => 'GET'
     ]
 ];
