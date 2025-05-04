@@ -1,15 +1,38 @@
-#criando o docker, versão não especificada pois o composer já puxa a melhor versão para o que necessita
+
 
 services:
-    #gerando a imagem do keycloak para utilizar dentro do docker 
-    keycloak:
-      #definindo as configurações do keycloak
-      image: quay.io/keycloak/keycloak:26.0.8
-      container_name: keycloak
-      command: start-dev
-      environment:
-        KEYCLOAK_ADMIN: admin
-        KEYCLOAK_ADMIN_PASSWORD: admin
-      ports:
-        - "8080:8080"
-      
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    command: start-dev
+    ports:
+      - "8080:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin 
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: dev-mem
+    volumes:
+      - ./docker/keycloak_data:/opt/keycloak/data
+    networks:
+      - default
+
+  terraform:
+    image: hashicorp/terraform:latest
+    build:
+      context: ../terraform  # Aponta para a pasta terraform/
+      dockerfile: Dockerfile
+    volumes:
+      - ../terraform:/workspace  # Aponta para a pasta terraform no nível superior
+    working_dir: /workspace
+    command: ["init"]
+    depends_on:
+      - keycloak
+
+  php:
+    image: php:8.2-cli  
+    ports:
+      - "8000:8000"  # Mapeia a porta do servidor PHP
+    volumes:
+      - ./PS:/var/www/html
+    working_dir: /var/www/html
+    command: ["php", "-S", "0.0.0.0:8000", "-t", "public"]  # Inicia o servidor embutido

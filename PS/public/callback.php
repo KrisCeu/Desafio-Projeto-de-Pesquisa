@@ -1,57 +1,75 @@
 <?php
 require_once __DIR__ . '/../auth/auth-config.php';
 
-if (!isset($_GET['code'])) {
-    die("Código de autorização não encontrado.");
-}
-// verifica totp:
-$userHasTOTP = isset($payload['acr']) && $payload['acr'] === '2'; // Nível 2 = TOTP configurado
+// 1. Obter o código de autorização
+$code = $_GET['code'] ?? null;
 
-if ($user['nivel_acesso'] === 'alto' && !$userHasTOTP) {
-    $_SESSION['pending_totp_setup'] = true;
-    header("Location: /totp-prompt.php"); // Página de escolha
-    exit;
+if (!$code) {
+    die("Código de autorização não encontrado!");
 }
 
-// Troca o código por token
+// 2. Trocar o código por um token
 $token_url = KEYCLOAK_URL . "/realms/" . REALM . "/protocol/openid-connect/token";
+
 $data = [
     'grant_type' => 'authorization_code',
-    'code' => $_GET['code'],
+    'client_id' => CLIENT_ID,
+    'client_secret' => CLIENT_SECRET,
     'redirect_uri' => REDIRECT_URI,
-    'client_id' => CLIENT_ID
+    'code' => $code
 ];
 
-$ch = curl_init($token_url);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-$response = curl_exec($ch);
-curl_close($ch);
 
-$token = json_decode($response, true);
-if (!isset($token['access_token'])) {
-    die("Falha ao obter token.");
+
+$data = [
+    'grant_type' => 'authorization_code',
+    'client_id' => CLIENT_ID,
+    'redirect_uri' => REDIRECT_URI,  // Removido client_secret
+    'code' => $code
+];
+
+
+$options = [
+    'http' => [
+        'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+        'method' => 'POST',
+        'content' => http_build_query($data)
+    ]
+];
+
+$context = stream_context_create($options);
+$response = file_get_contents($token_url, false, $context);
+
+if ($response === FALSE) {
+    die("Falha ao obter token");
 }
 
-// Decodifica o token JWT
-$parts = explode('.', $token['access_token']);
-$payload = json_decode(base64_decode(strtr($parts[1], '-_', '+/')), true);
+// 3. Decodificar a resposta
+$token_data = json_decode($response, true);
+$access_token = $token_data['access_token'] ?? null;
 
-// Verifica nivel_acesso (do atributo do usuário ou grupo)
-$nivel_acesso = $payload['nivel_acesso'] ?? 'baixo';
+if (!$access_token) {
+    die("Token de acesso não recebido");
+}
 
-// Inicia sessão segura
-session_start([
-    'cookie_httponly' => true,
-    'cookie_secure' => true // Habilitar se usar HTTPS
-]);
-$_SESSION['user'] = [
-    'username' => $payload['preferred_username'],
-    'nivel_acesso' => $nivel_acesso,
-    'access_token' => $token['access_token'] // Opcional para chamadas API
+// 4. Obter informações do usuário
+$userinfo_url = KEYCLOAK_URL . "/realms/" . REALM . "/protocol/openid-connect/userinfo";
+$options = [
+    'http' => [
+        'header' => "Authorization: Bearer $access_token\r\n",
+        'method' => 'GET'
+    ]
 ];
 
-// Redireciona para área protegida
-header("Location: /dashboard.php");
+$context = stream_context_create($options);
+$userinfo = file_get_contents($userinfo_url, false, $context);
+$user = json_decode($userinfo, true);
+
+// 5. Verificar e exibir os dados
+if (!$user) {
+    die("Falha ao obter informações do usuário");
+}
+
+// Exemplo de uso:
+echo "Bem-vindo, " . htmlspecialchars($user['preferred_username'] ?? 'Usuário');
 ?>

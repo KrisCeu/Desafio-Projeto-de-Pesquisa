@@ -19,13 +19,8 @@ resource "keycloak_realm" "autentica_realm" {
   edit_username_allowed = true 
   login_theme = "keycloak"
 
-   browser_flow = "custom_browser_flow"  # Nome direto do fluxo
 
   lifecycle {
-    ignore_changes = [
-      browser_flow  # Permite ajustes manuais sem conflitos
-    ]
+    ignore_changes = []
   }
 }
-
-

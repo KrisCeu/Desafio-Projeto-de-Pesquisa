@@ -1,10 +1,21 @@
 <?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-echo "Current dir: " . __DIR__;
-echo "Trying to load: " . __DIR__ . '/../auth/auth-config.php';
-require_once __DIR__ . '/../auth/auth-config.php';
 
+// Verifica se o arquivo de configuração existe
+$config_file = __DIR__ . '/../auth/auth-config.php';
+if (!file_exists($config_file)) {
+    die("Erro: auth-config.php não encontrado em $config_file");
+}
+
+require_once $config_file;
+
+// Verifica se as constantes estão definidas
+if (!defined('KEYCLOAK_URL') || !defined('REALM') || !defined('CLIENT_ID') || !defined('REDIRECT_URI')) {
+    die("Erro: Variáveis não definidas no auth-config.php");
+}
+
+// Constrói a URL de redirecionamento
 $auth_url = KEYCLOAK_URL . "/realms/" . REALM . "/protocol/openid-connect/auth";
 $params = [
     'client_id' => CLIENT_ID,
@@ -13,5 +24,7 @@ $params = [
     'scope' => 'openid profile'
 ];
 
+// Redireciona
 header("Location: $auth_url?" . http_build_query($params));
+exit;
 ?>
